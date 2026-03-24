@@ -52,24 +52,24 @@
   .skc-crest {
     width:56px; height:56px;
     background:var(--skc-blue3);
-    border:2px solid var(--skc-gold);
+    border:2px solid var(--skc-white);
     border-radius:6px 6px 14px 14px;
     display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:2px; flex-shrink:0;
   }
-  .crest-top { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:19px; color:var(--skc-gold); letter-spacing:2px; line-height:1; }
-  .crest-star { color:var(--skc-gold); font-size:10px; letter-spacing:3px; }
+  .crest-top { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:19px; color:var(--skc-white); letter-spacing:2px; line-height:1; }
+  .crest-star { color:var(--skc-white); font-size:10px; letter-spacing:3px; }
   h1 { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:26px; letter-spacing:0.5px; line-height:1.1; text-transform:uppercase; color:#fff; }
-  h1 em { color:var(--skc-gold); font-style:normal; }
+  h1 em { color:var(--skc-white); font-style:normal; }
   .subtitle { font-size:12px; color:var(--muted); margin-top:3px; letter-spacing:0.4px; }
   .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
   .analysis-badge {
     display:inline-flex; align-items:center; gap:6px;
     background:rgba(200,168,75,0.1); border:1px solid var(--border2);
-    color:var(--skc-gold); font-size:11px; font-weight:500;
+    color:var(--skc-white); font-size:11px; font-weight:500;
     padding:4px 12px; border-radius:20px; letter-spacing:0.5px;
   }
-  .badge-dot { width:6px; height:6px; background:var(--skc-gold); border-radius:50%; animation:pulse 2.5s ease-in-out infinite; }
+  .badge-dot { width:6px; height:6px; background:var(--skc-white); border-radius:50%; animation:pulse 2.5s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
   .header-meta { font-size:11px; color:var(--muted); text-align:right; line-height:1.8; }
 
@@ -86,14 +86,14 @@
     cursor:pointer; transition:all 0.15s;
   }
   .platform-btn:hover:not(:disabled) { border-color:var(--border2); color:var(--text); }
-  .platform-btn.active-all { background:rgba(200,168,75,0.12); border-color:var(--skc-gold); color:var(--skc-gold); }
+  .platform-btn.active-all { background:rgba(200,168,75,0.12); border-color:var(--skc-white); color:var(--skc-white); }
   .platform-btn.active-yt  { background:rgba(255,0,0,0.1); border-color:#ff5555; color:#ff7777; }
   .platform-btn:disabled   { opacity:0.4; cursor:not-allowed; }
   .platform-icon { width:18px; height:18px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:900; flex-shrink:0; }
   .yt-icon     { background:#FF0000; color:#fff; }
   .reddit-icon { background:#FF4500; color:#fff; }
   .sky-icon    { background:#0085ff; color:#fff; }
-  .all-icon    { background:var(--skc-gold3); color:#fff; }
+  .all-icon    { background:var(--skc-white3); color:#fff; }
   .coming-soon { font-family:'Barlow',sans-serif; font-size:9px; font-weight:400; background:rgba(148,163,184,0.15); color:var(--muted); padding:1px 5px; border-radius:3px; letter-spacing:0.3px; text-transform:none; }
   .plat-divider { width:1px; height:28px; background:var(--border); margin:0 2px; }
   .yt-count { font-family:'Barlow',sans-serif; font-size:10px; font-weight:400; background:rgba(255,68,68,0.2); color:#ff8888; padding:1px 5px; border-radius:2px; letter-spacing:0; text-transform:none; }
@@ -106,14 +106,14 @@
     animation:fadeUp 0.45s ease both;
   }
   .metric-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
-  .metric-card.total::before { background:var(--skc-gold); }
+  .metric-card.total::before { background:var(--skc-white); }
   .metric-card.pos::before   { background:var(--pos); }
   .metric-card.neg::before   { background:var(--neg); }
   .metric-card.neu::before   { background:var(--neu); }
   .metric-card.score::before { background:#60a5fa; }
   .metric-label { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); margin-bottom:8px; }
   .metric-value { font-family:'Barlow Condensed',sans-serif; font-size:34px; font-weight:700; line-height:1; }
-  .metric-card.total .metric-value { color:var(--skc-gold); }
+  .metric-card.total .metric-value { color:var(--skc-white); }
   .metric-card.pos .metric-value   { color:var(--pos); }
   .metric-card.neg .metric-value   { color:var(--neg); }
   .metric-card.neu .metric-value   { color:var(--neu); }
@@ -125,7 +125,7 @@
   /* Charts */
   .charts-grid { display:grid; grid-template-columns:320px 1fr; gap:14px; margin-bottom:14px; }
   .chart-card { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:18px 20px; animation:fadeUp 0.5s ease both; }
-  .chart-title { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1.3px; color:var(--skc-gold); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .chart-title { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1.3px; color:var(--skc-white); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
   .title-line { flex:1; height:1px; background:var(--border); }
   .chart-wrap { position:relative; width:100%; }
   .donut-legend { display:flex; justify-content:center; gap:18px; margin-top:12px; font-size:11px; }
@@ -152,7 +152,7 @@
     background:transparent; color:var(--muted); cursor:pointer; transition:all 0.15s;
   }
   .tab:hover { background:var(--bg3); color:var(--text); }
-  .tab.act-all { background:rgba(200,168,75,0.12); border-color:var(--skc-gold); color:var(--skc-gold); }
+  .tab.act-all { background:rgba(200,168,75,0.12); border-color:var(--skc-white); color:var(--skc-white); }
   .tab.act-pos { background:rgba(74,222,128,0.1);  border-color:var(--pos); color:var(--pos); }
   .tab.act-neg { background:rgba(248,113,113,0.1); border-color:var(--neg); color:var(--neg); }
   .tab.act-neu { background:rgba(148,163,184,0.1); border-color:var(--neu); color:var(--neu); }
@@ -170,7 +170,7 @@
   .likes-tag { font-size:11px; color:var(--muted); }
 
   footer { border-top:1px solid var(--border); padding:18px 0; text-align:center; font-size:11px; color:var(--muted); margin-top:4px; }
-  footer em { color:var(--skc-gold); font-style:normal; }
+  footer em { color:var(--skc-white); font-style:normal; }
 
   @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
 
@@ -301,7 +301,7 @@
         <div><div class="insight-lbl">At-risk fan signal</div><div class="insight-txt">Performance criticism clusters around the SD loss — "missed set pieces", "need more from defense." Flag for renewal outreach.</div></div>
       </div>
       <div class="insight-item">
-        <div class="insight-icon" style="background:rgba(200,168,75,0.1);color:var(--skc-gold)">◆</div>
+        <div class="insight-icon" style="background:rgba(200,168,75,0.1);color:var(--skc-white)">◆</div>
         <div><div class="insight-lbl">Rebuild patience</div><div class="insight-txt">"Loving what I'm hearing from Wicky" scored +0.93 after a loss — fans show high tolerance for rebuild narrative.</div></div>
       </div>
       <div class="insight-item">
