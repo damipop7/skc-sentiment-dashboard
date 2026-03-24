@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SKC Fan Sentiment — Social Listening Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --skc-blue: #0e2060;
+    --skc-light: #1a3a8f;
+    --skc-gold: #c9a84c;
+    --pos: #22c55e;
+    --neg: #ef4444;
+    --neu: #94a3b8;
+    --bg: #070d1f;
+    --bg2: #0d1730;
+    --bg3: #111e3a;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8edf8;
+    --muted: #7a8aaa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,58,143,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,58,143,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 0 24px;
+    margin-bottom: 36px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .logo-area { display: flex; align-items: center; gap: 16px; }
+
+  .skc-crest {
+    width: 52px; height: 52px;
+    background: var(--skc-blue);
+    border: 1px solid var(--skc-gold);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--skc-gold);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  h1 span { color: var(--skc-gold); }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  .header-meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+
+  .live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--pos);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--pos);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Metric cards row */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0,1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .metric-card.total::after { background: var(--skc-gold); }
+  .metric-card.pos::after { background: var(--pos); }
+  .metric-card.neg::after { background: var(--neg); }
+  .metric-card.neu::after { background: var(--neu); }
+  .metric-card.score::after { background: var(--skc-light); }
+
+  .metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .metric-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .metric-card.pos .metric-value { color: var(--pos); }
+  .metric-card.neg .metric-value { color: var(--neg); }
+  .metric-card.neu .metric-value { color: var(--neu); }
+  .metric-card.score .metric-value { color: #60a5fa; }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* Charts grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .chart-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Bottom row */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Comments feed */
+  .comments-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .comments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tab {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .tab:hover { background: var(--bg3); }
+  .tab.active-all { background: rgba(201,168,76,0.15); border-color: var(--skc-gold); color: var(--skc-gold); }
+  .tab.active-pos { background: rgba(34,197,94,0.12); border-color: var(--pos); color: var(--pos); }
+  .tab.active-neg { background: rgba(239,68,68,0.12); border-color: var(--neg); color: var(--neg); }
+  .tab.active-neu { background: rgba(148,163,184,0.12); border-color: var(--neu); color: var(--neu); }
+
+  .comments-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .comment-item {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+
+  .comment-item:hover { border-color: rgba(255,255,255,0.15); }
+
+  .sentiment-bar {
+    width: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    align-self: stretch;
+    min-height: 20px;
+  }
+
+  .comment-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .comment-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .score-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  .video-tag {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+  }
+
+  .likes-tag {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Insights panel */
+  .insight-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .insight-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .insight-icon {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .insight-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+  .insight-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 3px; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  footer span { color: var(--skc-gold); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 900px) {
+    .metrics-row { grid-template-columns: repeat(3, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header>
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="skc-crest">SKC</div>
+        <div>
+          <h1>Sporting KC <span>Fan Sentiment</span></h1>
+          <div class="subtitle">Social Listening Dashboard · YouTube · March 2026</div>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div class="live-badge"><span class="live-dot"></span> Analysis Complete</div>
+        <div>Source: Sporting KC Official YouTube</div>
+        <div>25 videos · 72 comments · VADER NLP</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics -->
+  <div class="metrics-row">
+    <div class="metric-card total" style="animation-delay:0s">
+      <div class="metric-label">Comments Analyzed</div>
+      <div class="metric-value" style="color:var(--skc-gold)">72</div>
+      <div class="metric-sub">across 25 videos</div>
+    </div>
+    <div class="metric-card pos" style="animation-delay:0.05s">
+      <div class="metric-label">Positive</div>
+      <div class="metric-value">44</div>
+      <div class="metric-sub">61.1% of total</div>
+    </div>
+    <div class="metric-card neg" style="animation-delay:0.1s">
+      <div class="metric-label">Negative</div>
+      <div class="metric-value">12</div>
+      <div class="metric-sub">16.7% of total</div>
+    </div>
+    <div class="metric-card neu" style="animation-delay:0.15s">
+      <div class="metric-label">Neutral</div>
+      <div class="metric-value">16</div>
+      <div class="metric-sub">22.2% of total</div>
+    </div>
+    <div class="metric-card score" style="animation-delay:0.2s">
+      <div class="metric-label">Avg VADER Score</div>
+      <div class="metric-value">+0.364</div>
+      <div class="metric-sub">−1.0 to +1.0 scale</div>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Sentiment Breakdown</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="donutChart"></canvas>
+      </div>
+      <div style="display:flex;justify-content:center;gap:20px;margin-top:14px;font-size:12px;">
+        <span style="display:flex;align-items:center;gap:5px;color:var(--pos)"><span style="width:10px;height:10px;border-radius:2px;background:var(--pos);display:inline-block"></span>Positive 61%</span>
+        <span style="display:flex;align-items:center;gap:5px;color:var(--neu)"><span style="width:10px;height:10px;border-radius:2px;background:var(--neu);display:inline-block"></span>Neutral 22%</span>
+        <span style="display:flex;align-items:center;gap:5px;color:var(--neg)"><span style="width:10px;height:10px;border-radius:2px;background:var(--neg);display:inline-block"></span>Negative 17%</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Sentiment by Video</div>
+      <div class="chart-wrap" style="height:290px">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom charts -->
+  <div class="bottom-grid">
+    <div class="chart-card">
+      <div class="chart-title">VADER Score Distribution</div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="scatterChart"></canvas>
+      </div>
+    </div>
+
+    <div class="insight-card">
+      <div class="chart-title">Key Insights → Fan Data Strategy</div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:rgba(34,197,94,0.12);color:var(--pos)">▲</div>
+        <div>
+          <div class="insight-label">Retention signal</div>
+          <div class="insight-text">Win content & GK highlights drive highest positivity (avg 0.87). Behind-the-scenes format outperforms all press conference content.</div>
+        </div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:rgba(239,68,68,0.12);color:var(--neg)">▼</div>
+        <div>
+          <div class="insight-label">At-risk fan signal</div>
+          <div class="insight-text">Performance criticism clusters around the SD loss video — "missed set pieces", "need more from defense" — flag for renewal outreach.</div>
+        </div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:rgba(201,168,76,0.12);color:var(--skc-gold)">◆</div>
+        <div>
+          <div class="insight-label">Rebuild patience</div>
+          <div class="insight-text">"Loving what I'm hearing from coach Wicky" scored 0.93 after a loss — fans show high tolerance for rebuild narrative through March 2026.</div>
+        </div>
+      </div>
+      <div class="insight-item">
+        <div class="insight-icon" style="background:rgba(96,165,250,0.12);color:#60a5fa">→</div>
+        <div>
+          <div class="insight-label">CRM recommendation</div>
+          <div class="insight-text">High-engagement positive commenters (9+ likes) represent warm lead segment — route to Ticket Sales for season ticket prospecting.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments feed -->
+  <div class="comments-section">
+    <div class="comments-header">
+      <div class="chart-title" style="margin:0">Fan Comments Feed</div>
+      <div class="filter-tabs">
+        <button class="tab active-all" onclick="filterComments('all', this)">All</button>
+        <button class="tab" onclick="filterComments('positive', this)">Positive</button>
+        <button class="tab" onclick="filterComments('negative', this)">Negative</button>
+        <button class="tab" onclick="filterComments('neutral', this)">Neutral</button>
+      </div>
+    </div>
+    <div class="comments-list" id="commentsList"></div>
+  </div>
+
+  <footer>
+    Built by <span>SKC Fan Data Analyst</span> · YouTube Data API + VADER NLP + Chart.js · March 2026
+  </footer>
+
+</div>
+
+<script>
+const DATA = {
+  summary: { total: 72, positive: 44, negative: 12, neutral: 16, avg_score: 0.364 },
+  by_video: {
+    "Inside SKC Win at LA Galaxy": { positive: 5, negative: 0, neutral: 0, avg: 0.738 },
+    "Pulskamp denies Columbus penalty": { positive: 5, negative: 2, neutral: 2, avg: 0.352 },
+    "Sporting Park erupts Pulskamp penalty save": { positive: 4, negative: 0, neutral: 1, avg: 0.563 },
+    "Joveljic ties it up vs Columbus": { positive: 2, negative: 2, neutral: 3, avg: 0.108 },
+    "Joveljic scores second of the night": { positive: 2, negative: 1, neutral: 2, avg: 0.192 },
+    "Lasse scores game winner MLS debut": { positive: 2, negative: 0, neutral: 2, avg: 0.435 },
+    "Post-Game Press Conference SKC 0-1 SD": { positive: 2, negative: 2, neutral: 0, avg: 0.101 },
+    "Pulskamp Wicky Lee Press Conference": { positive: 2, negative: 0, neutral: 1, avg: 0.553 },
+    "Largest animal you could fight off": { positive: 2, negative: 1, neutral: 0, avg: 0.274 },
+    "Do they know this sound": { positive: 2, negative: 0, neutral: 1, avg: 0.482 },
+    "Gen Z Players Try 90s Toys": { positive: 2, negative: 0, neutral: 0, avg: 0.696 },
+    "Kansas City here we come": { positive: 1, negative: 1, neutral: 1, avg: 0.258 },
+    "Welcome to KC Diego Borges": { positive: 1, negative: 1, neutral: 0, avg: 0.167 },
+    "Focused for Saturdays Showdown": { positive: 2, negative: 0, neutral: 0, avg: 0.797 },
+    "SKC at San Jose Post-Game": { positive: 1, negative: 1, neutral: 0, avg: 0.106 },
+    "Shapi scores precision goal vs Colorado": { positive: 1, negative: 1, neutral: 1, avg: 0.033 },
+    "Pre-Game Press Conference SKC vs COL": { positive: 1, negative: 0, neutral: 0, avg: 0.586 },
+    "A perfect debut": { positive: 1, negative: 0, neutral: 0, avg: 0.637 },
+    "Game Balls for Berg Johnsen Wicky Lee": { positive: 1, negative: 0, neutral: 0, avg: 0.875 },
+    "How does it feel to be back at Sporting Park": { positive: 1, negative: 0, neutral: 0, avg: 0.625 },
+    "Introducing Taylor Calheira Ethan Bartlow": { positive: 0, negative: 0, neutral: 2, avg: 0.0 },
+    "Would you rather be a baby goat": { positive: 1, negative: 0, neutral: 0, avg: 0.758 }
+  },
+  comments: [
+    { text: "I love this team I have been supporting for a while and watching the win was absolutely incredible ❤❤❤❤", sentiment: "positive", compound: 0.9838, video_title: "Inside SKC Win at LA Galaxy", likes: 0 },
+    { text: "Honestly super nice to see Lee travel with the team and give Wicky some props, these two could become a lethal combo", sentiment: "positive", compound: 0.8658, video_title: "Inside SKC Win at LA Galaxy", likes: 3 },
+    { text: "What a gritty/resilient group! Love it.", sentiment: "positive", compound: 0.6696, video_title: "Inside SKC Win at LA Galaxy", likes: 1 },
+    { text: "loving these behind the scenes videos. Definitely can feel the change coming.", sentiment: "positive", compound: 0.765, video_title: "Inside SKC Win at LA Galaxy", likes: 1 },
+    { text: "Now we are gonna win against Colorado lestsss go SKc", sentiment: "positive", compound: 0.5859, video_title: "Inside SKC Win at LA Galaxy", likes: 1 },
+    { text: "Game Balls for Berg Johnsen — This is the team play we've been waiting for and of course Afrifa is involved.", sentiment: "positive", compound: 0.875, video_title: "Game Balls for Berg Johnsen Wicky Lee", likes: 5 },
+    { text: "Crowd was nuts after that one. One of my favorite moments of a game that I've been to.", sentiment: "positive", compound: 0.8977, video_title: "Pulskamp denies Columbus penalty", likes: 9 },
+    { text: "I was at this game thought we were going to win still amazing game very entertaining", sentiment: "positive", compound: 0.8221, video_title: "Pulskamp denies Columbus penalty", likes: 7 },
+    { text: "Great save!", sentiment: "positive", compound: 0.8221, video_title: "Pulskamp denies Columbus penalty", likes: 5 },
+    { text: "Loving what im hearing from coach Wicky. The rebuild will take time and the wins will come. I still believe that we will win!!!!", sentiment: "positive", compound: 0.9269, video_title: "Post-Game Press Conference SKC 0-1 SD", likes: 5 },
+    { text: "I have no expectations for this team... This is a rebuild. We will be a good team again. Just not for a while yet.", sentiment: "positive", compound: 0.6124, video_title: "Post-Game Press Conference SKC 0-1 SD", likes: 0 },
+    { text: "Need to practice corners and set pieces. Those are missed opportunities for goals.", sentiment: "negative", compound: -0.507, video_title: "Post-Game Press Conference SKC 0-1 SD", likes: 0 },
+    { text: "We should have won that game, need more from the defense.", sentiment: "negative", compound: -0.4003, video_title: "Sporting Park erupts Pulskamp penalty save", likes: 5 },
+    { text: "skc will never win without an experienced GK", sentiment: "negative", compound: -0.4717, video_title: "Shapi scores precision goal vs Colorado", likes: 1 },
+    { text: "He looks like he gonna turn into prime Sergio Ramos 😱", sentiment: "negative", compound: -0.5106, video_title: "Welcome to KC Diego Borges", likes: 0 },
+    { text: "Need more skilled players across the pitch, Manu and Dejan are the only up to speed guys", sentiment: "negative", compound: -0.4019, video_title: "Post-Game Press Conference SKC 0-1 SD", likes: 0 },
+    { text: "3 pts should've been ours! Silly mistakes tied it up.", sentiment: "negative", compound: -0.4003, video_title: "Joveljic scores second of the night", likes: 0 },
+    { text: "Hello, it's nice that someone finally has something to say about the View-Master. Many greetings from Germany!", sentiment: "positive", compound: 0.8126, video_title: "Gen Z Players Try 90s Toys", likes: 0 },
+    { text: "I swear i am not old... but dang.. 😂", sentiment: "positive", compound: 0.5789, video_title: "Gen Z Players Try 90s Toys", likes: 0 },
+    { text: "Sporting it's ok we lost we can win next time I also went to the game", sentiment: "positive", compound: 0.5719, video_title: "Shapi scores precision goal vs Colorado", likes: 2 },
+    { text: "Good luck on Saturday boys!", sentiment: "positive", compound: 0.7345, video_title: "Do they know this sound", likes: 0 },
+    { text: "Let's go deigo❤🎉", sentiment: "positive", compound: 0.7845, video_title: "Welcome to KC Diego Borges", likes: 0 },
+    { text: "love seeing the smiles on the faces. Definitely seeing a turn around this year", sentiment: "positive", compound: 0.875, video_title: "Game Balls for Berg Johnsen Wicky Lee", likes: 3 },
+    { text: "Let's go ❤❤❤❤", sentiment: "positive", compound: 0.9571, video_title: "Focused for Saturdays Showdown", likes: 0 },
+    { text: "Come on guys let's beat la galaxy ❤", sentiment: "positive", compound: 0.6369, video_title: "Focused for Saturdays Showdown", likes: 0 },
+    { text: "Hmmm I'd edit for you SKC 😁 (and I'm local)", sentiment: "positive", compound: 0.4588, video_title: "Lasse scores game winner MLS debut", likes: 1 },
+    { text: "This is the team play we've been waiting for and of course Afrifa is involved.", sentiment: "positive", compound: 0.34, video_title: "Lasse scores game winner MLS debut", likes: 5 },
+    { text: "I was at the match today was so nervous to look but he saved the day 🎉", sentiment: "positive", compound: 0.7491, video_title: "Pulskamp denies Columbus penalty", likes: 0 },
+    { text: "LETS GO SKC❤❤❤❤❤❤", sentiment: "positive", compound: 0.9803, video_title: "Kansas City here we come", likes: 1 },
+    { text: "Great memories of watching games there ⚽️", sentiment: "positive", compound: 0.6249, video_title: "How does it feel to be back at Sporting Park", likes: 0 },
+    { text: "Go, sporting! Can't wait for the home opener match; I will be chanting till my head explodes!", sentiment: "positive", compound: 0.34, video_title: "SKC at San Jose Post-Game", likes: 2 },
+    { text: "Let's start this season off strong SKC!", sentiment: "positive", compound: 0.8114, video_title: "Pulskamp Wicky Lee Press Conference", likes: 1 },
+    { text: "Tough game, that's all I got.", sentiment: "negative", compound: -0.128, video_title: "SKC at San Jose Post-Game", likes: 4 },
+    { text: "Defense is still disorganized — where was the offense? Pass, pass, keep possession but what are you doing to execute a plan to score?", sentiment: "negative", compound: -0.0772, video_title: "Sporting Park erupts Pulskamp penalty save", likes: 0 },
+    { text: "That made up for the nonsense play from him earlier.", sentiment: "negative", compound: -0.0772, video_title: "Pulskamp denies Columbus penalty", likes: 6 },
+    { text: "Fight off LAFC. Fight off Portland Timbers. 🙏", sentiment: "negative", compound: -0.6369, video_title: "Largest animal you could fight off", likes: 0 },
+    { text: "🇷🇺🇷🇺🇷🇺", sentiment: "neutral", compound: 0.0, video_title: "Shapi scores precision goal vs Colorado", likes: 1 },
+    { text: "You guys should ask Messi or Ronaldo 👀", sentiment: "neutral", compound: 0.0, video_title: "Do they know this sound", likes: 0 },
+    { text: "LETSSS GOOO", sentiment: "neutral", compound: 0.0, video_title: "Lasse scores game winner MLS debut", likes: 0 },
+    { text: "WERE FINALLY BACK", sentiment: "neutral", compound: 0.0, video_title: "Lasse scores game winner MLS debut", likes: 0 },
+    { text: "BIG JOHN 🧱", sentiment: "neutral", compound: 0.0, video_title: "Pulskamp denies Columbus penalty", likes: 4 },
+    { text: "I was there in the cauldron!", sentiment: "neutral", compound: 0.0, video_title: "Pulskamp denies Columbus penalty", likes: 4 },
+    { text: "💙🩵💪⚽🥅", sentiment: "neutral", compound: 0.0, video_title: "Joveljic scores second of the night", likes: 0 },
+    { text: "LETS GO SPORTING", sentiment: "neutral", compound: 0.0, video_title: "Joveljic ties it up vs Columbus", likes: 3 },
+    { text: "Davis is so clutch!", sentiment: "neutral", compound: 0.0, video_title: "Joveljic ties it up vs Columbus", likes: 1 },
+    { text: "Finish the lyrics. Oh when the wiz", sentiment: "neutral", compound: 0.0, video_title: "Kansas City here we come", likes: 0 },
+    { text: "Man Taylor was an absolute monster at tulsa", sentiment: "neutral", compound: 0.0, video_title: "Introducing Taylor Calheira Ethan Bartlow", likes: 0 },
+    { text: "Lets Go Fellas! big game tonight!", sentiment: "neutral", compound: 0.0, video_title: "Pulskamp Wicky Lee Press Conference", likes: 3 }
+  ]
+};
+
+// ── Donut chart ───────────────────────────────────────────
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Positive', 'Neutral', 'Negative'],
+    datasets: [{
+      data: [44, 16, 12],
+      backgroundColor: ['#22c55e', '#94a3b8', '#ef4444'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.parsed} comments (${Math.round(ctx.parsed/72*100)}%)`
+        }
+      }
+    }
+  }
+});
+
+// ── Bar chart ─────────────────────────────────────────────
+const videos = Object.keys(DATA.by_video);
+const shortLabels = videos.map(v => v.length > 28 ? v.slice(0,28)+'…' : v);
+const posData = videos.map(v => DATA.by_video[v].positive);
+const negData = videos.map(v => DATA.by_video[v].negative);
+const neuData = videos.map(v => DATA.by_video[v].neutral);
+
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: shortLabels,
+    datasets: [
+      { label: 'Positive', data: posData, backgroundColor: '#22c55e', borderRadius: 2 },
+      { label: 'Neutral',  data: neuData, backgroundColor: '#94a3b8', borderRadius: 2 },
+      { label: 'Negative', data: negData, backgroundColor: '#ef4444', borderRadius: 2 }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    scales: {
+      x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7a8aaa', font: { size: 11 } } },
+      y: { stacked: true, grid: { display: false }, ticks: { color: '#7a8aaa', font: { size: 10 }, crossAlign: 'far' } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// ── Scatter chart ─────────────────────────────────────────
+const scatterData = DATA.comments.map((c, i) => ({
+  x: i,
+  y: c.compound,
+  sentiment: c.sentiment
+}));
+
+new Chart(document.getElementById('scatterChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'VADER Score',
+      data: scatterData,
+      backgroundColor: scatterData.map(d =>
+        d.sentiment === 'positive' ? 'rgba(34,197,94,0.7)' :
+        d.sentiment === 'negative' ? 'rgba(239,68,68,0.7)' : 'rgba(148,163,184,0.5)'
+      ),
+      pointRadius: 5,
+      pointHoverRadius: 7
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { display: false },
+      y: {
+        min: -1, max: 1,
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#7a8aaa', font: { size: 11 } }
+      }
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const c = DATA.comments[ctx.dataIndex];
+            return [`Score: ${c.compound}`, c.text.slice(0,60)+'…'];
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── Comments feed ─────────────────────────────────────────
+let currentFilter = 'all';
+
+function filterComments(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.tab').forEach(t => {
+    t.className = 'tab';
+  });
+  btn.className = `tab active-${filter}`;
+  renderComments();
+}
+
+function renderComments() {
+  const list = document.getElementById('commentsList');
+  const filtered = currentFilter === 'all'
+    ? DATA.comments
+    : DATA.comments.filter(c => c.sentiment === currentFilter);
+
+  const sorted = [...filtered].sort((a,b) => Math.abs(b.compound) - Math.abs(a.compound));
+
+  list.innerHTML = sorted.slice(0,15).map(c => {
+    const color = c.sentiment === 'positive' ? '#22c55e' : c.sentiment === 'negative' ? '#ef4444' : '#94a3b8';
+    const chipBg = c.sentiment === 'positive' ? 'rgba(34,197,94,0.12)' : c.sentiment === 'negative' ? 'rgba(239,68,68,0.12)' : 'rgba(148,163,184,0.1)';
+    const sign = c.compound > 0 ? '+' : '';
+    return `
+      <div class="comment-item">
+        <div class="sentiment-bar" style="background:${color}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="comment-text">${c.text}</div>
+          <div class="comment-meta">
+            <span class="score-chip" style="background:${chipBg};color:${color}">${sign}${c.compound.toFixed(3)}</span>
+            <span class="video-tag">↳ ${c.video_title}</span>
+            ${c.likes > 0 ? `<span class="likes-tag">♥ ${c.likes}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+renderComments();
+</script>
+</body>
+</html>
